@@ -1,4 +1,11 @@
+import json
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlparse
+
 import pytest
+from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
+from langchain_core.messages import AIMessage
 
 # Shaped like a real /dom/info response (checked live against DOM.RIA).
 SAMPLE = {
@@ -20,3 +27,40 @@ def info(realty_id: int, **over) -> dict:
 def env(tmp_path, monkeypatch):
     monkeypatch.setenv("RIA_API_KEY", "test-key")
     monkeypatch.setenv("FLATS_DB_PATH", str(tmp_path / "flats.db"))
+    monkeypatch.setenv("REPORTS_DIR", str(tmp_path / "reports"))
+
+
+class FakeRia(BaseHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def do_GET(self):
+        path = urlparse(self.path).path
+        body = {
+            "/dom/states": [{"stateID": 5, "name": "Львівська", "region_name": "Львів"}],
+            "/dom/cities/5": [{"cityID": 5, "name": "Львів"}],
+            "/dom/search": {"items": [1, 2], "count": 2},
+        }.get(path) or (info(int(path.rsplit("/", 1)[1])) if path.startswith("/dom/info/") else {})
+        data = json.dumps(body).encode()
+        self.send_response(200)
+        self.send_header("content-length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+
+class ScriptedModel(FakeMessagesListChatModel):
+    def bind_tools(self, tools, **kwargs):
+        return self
+
+
+def call(name, args, id):
+    return AIMessage(content="", tool_calls=[{"name": name, "args": args, "id": id, "type": "tool_call"}])
+
+
+@pytest.fixture
+def fake_ria(monkeypatch):
+    srv = HTTPServer(("127.0.0.1", 0), FakeRia)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    monkeypatch.setenv("RIA_BASE_URL", f"http://127.0.0.1:{srv.server_port}")
+    yield
+    srv.shutdown()

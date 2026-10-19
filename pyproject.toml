@@ -1,7 +1,7 @@
 [project]
 name = "flatmarket"
 version = "0.1.0"
-description = "Multi-agent flat market evaluation (DOM.RIA). Agent A: LLM data collection via MCP + LangGraph."
+description = "Multi-agent flat market evaluation (DOM.RIA): Agent A collects listings, Agent B writes a report with charts."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -12,14 +12,18 @@ dependencies = [
     "langchain>=1.0",
     "langchain-mcp-adapters>=0.1",
     "langchain-google-genai>=2.0",
+    "pandas>=3.0.6",
+    "matplotlib>=3.11.2",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-asyncio>=0.23", "respx>=0.21"]
 
 [project.scripts]
+flatmarket = "flatmarket.pipeline:main"
 flatmarket-agent-a = "flatmarket.agent_a:main"
 flatmarket-mcp = "flatmarket.server:main"
+flatmarket-charts-mcp = "flatmarket.charts:main"
 
 [build-system]
 requires = ["hatchling"]

@@ -51,7 +51,8 @@ def mcp_client() -> MultiServerMCPClient:
 
 
 async def build_agent(model=None):
-    tools = await mcp_client().get_tools()
+    # query_flats is Agent B's tool; offering it here makes the model read the (empty) DB instead of collecting
+    tools = [t for t in await mcp_client().get_tools() if t.name in ("get_locations", "search_flats")]
     return create_agent(model or gemini(), tools, system_prompt=SYSTEM, name="agent_a")
 
 
