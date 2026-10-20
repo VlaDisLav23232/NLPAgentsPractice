@@ -1,8 +1,4 @@
-"""Agent B: a Gemini-driven LangGraph agent that turns the flats Agent A collected into a realtor-style report.
-
-Tools: `query_flats` (MCP server `flats`, read-only SQL) and `run_python` (MCP server `charts`, pandas/matplotlib in a
-subprocess). Input is Agent A's handoff dict; output is a Markdown report saved next to its charts.
-"""
+"""Agent B: turns the collected flats into a Markdown report with charts."""
 
 from __future__ import annotations
 
@@ -45,7 +41,6 @@ RANGES = {"rooms": ("rooms_min", "rooms_max"), "total_area": ("area_min", "area_
 
 
 def scope_sql(filters: dict) -> str:
-    """SQL condition selecting the rows that match Agent A's last search (the table holds earlier searches too)."""
     parts = [f"city_id = {int(filters['city_id'])}"]
     if pattern := ADVERT_TYPE.get(filters.get("operation", "sale")):
         parts.append(f"advert_type LIKE '{pattern}'")
@@ -58,7 +53,6 @@ def scope_sql(filters: dict) -> str:
 
 
 def mcp_client(report_dir: Path) -> MultiServerMCPClient:
-    # Only the DB path and the output folder: neither server needs RIA_API_KEY or GOOGLE_API_KEY.
     env = {"FLATS_DB_PATH": str(db.path()), "REPORT_DIR": str(report_dir)}
     server = lambda module: {"transport": "stdio", "command": sys.executable, "args": ["-m", module], "env": env}
     return MultiServerMCPClient({"flats": server("flatmarket.server"), "charts": server("flatmarket.charts")})
@@ -77,7 +71,6 @@ def task(request: str, handoff: dict) -> str:
 
 
 def finish(report_md: str, report_dir: Path) -> Path:
-    """Save the report; append any chart the model made but forgot to embed."""
     charts = sorted(p.name for p in report_dir.glob("*.png"))
     missing = [c for c in charts if c not in report_md]
     if missing:
@@ -95,7 +88,6 @@ def new_report_dir() -> Path:
 
 
 async def run(request: str, handoff: dict, report_dir: Path | None = None, model=None) -> dict:
-    """{"report": Markdown text, "report_path": path of report.md, "charts": [png names]}."""
     report_dir = report_dir or new_report_dir()
     agent = await build_agent(report_dir, model)
     result = await agent.ainvoke({"messages": [("user", task(request, handoff))]}, {"recursion_limit": 40})

@@ -1,4 +1,4 @@
-"""One SQLite table, `flats`, one row per DOM.RIA listing."""
+"""SQLite table `flats`, one row per listing."""
 
 from __future__ import annotations
 

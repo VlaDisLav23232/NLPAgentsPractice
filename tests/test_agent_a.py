@@ -1,5 +1,3 @@
-"""Agent A end to end: scripted model -> real MCP server subprocess (stdio) -> fake DOM.RIA over HTTP -> SQLite."""
-
 import pytest
 from langchain_core.messages import AIMessage
 

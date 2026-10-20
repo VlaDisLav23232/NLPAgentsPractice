@@ -7,7 +7,6 @@ import pytest
 from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
 from langchain_core.messages import AIMessage
 
-# Shaped like a real /dom/info response (checked live against DOM.RIA).
 SAMPLE = {
     "realty_id": 35055305, "rooms_count": 1, "state_id": 5, "state_name": "Львовская", "city_id": 5,
     "city_name": "Львов", "district_name": "Привокзальная", "street_name": "Шевченко Тараса улица",

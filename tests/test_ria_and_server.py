@@ -6,7 +6,6 @@ from flatmarket import db, ria, server
 from tests.conftest import info
 
 BASE = "https://developers.ria.com"
-# Verbatim body DOM.RIA returned (HTTP 403) for a key whose free package was used up.
 QUOTA_BODY = {"error": "У Вашому пакеті закінчились запити. Ви не можете робити запити на це API"}
 
 
@@ -15,7 +14,7 @@ def test_build_query_uses_documented_params():
     assert q["operation_type"] == 1 and q["category"] == 1 and q["realty_type"] == 2 and q["city_id"] == 5
     assert q["characteristic[209][from]"] == 1 and q["characteristic[209][to]"] == 2
     assert q["characteristic[214][to]"] == 80.5 and "characteristic[214][from]" not in q
-    assert q["characteristic[234][to]"] == 90000 and q["characteristic[242]"] == 239  # USD
+    assert q["characteristic[234][to]"] == 90000 and q["characteristic[242]"] == 239
     assert "characteristic[242]" not in ria.build_query(5, None, "sale", None, None, None, None, None, None)
 
 
@@ -76,16 +75,16 @@ def test_search_flats_stores_then_skips_stored():
     calls = len(respx.calls)
     again = server.search_flats(city_id=5, rooms_max=2, max_new=10)
     assert again["stored_now"] == 0 and again["already_stored_seen"] == 3
-    assert len(respx.calls) == calls + 1  # only the search request, no /dom/info
+    assert len(respx.calls) == calls + 1
 
 
 @respx.mock
 def test_search_flats_pages_past_stored_listings():
     p0, p1 = list(range(1, 101)), list(range(101, 111))
     mock_search({"0": p0, "1": p1})
-    server.search_flats(city_id=5, max_new=100)  # stores all of page 0
+    server.search_flats(city_id=5, max_new=100)
     out = server.search_flats(city_id=5, max_new=5)
-    assert out["stored_now"] == 5 and out["rows_in_db"] == 105  # went on to page 1
+    assert out["stored_now"] == 5 and out["rows_in_db"] == 105
 
 
 @respx.mock

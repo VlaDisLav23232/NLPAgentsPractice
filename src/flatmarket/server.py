@@ -1,7 +1,4 @@
-"""MCP server `flats`: DOM.RIA search + local SQLite access. Run: `uv run python -m flatmarket.server`
-
-Agent A uses get_locations + search_flats. Agent B reads the data with query_flats.
-"""
+"""MCP server `flats`: DOM.RIA search and SQLite access."""
 
 from __future__ import annotations
 
@@ -15,7 +12,7 @@ from flatmarket import db, ria
 
 load_dotenv()
 mcp = FastMCP("flats")
-MAX_PAGES = 5  # looking for new (not yet stored) listings beyond the first 500 matches is not worth the quota
+MAX_PAGES = 5
 
 
 @mcp.tool()
@@ -74,7 +71,7 @@ def search_flats(
             note = f"Stopped early, API quota reached: {e}. Try again later (stored listings are kept)."
             break
         except ria.RiaError:
-            failed += 1  # e.g. listing was removed
+            failed += 1
     return {
         "status": "partial" if note else "ok",
         "note": note,

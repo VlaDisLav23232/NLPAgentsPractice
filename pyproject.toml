@@ -22,8 +22,6 @@ dev = ["pytest>=8", "pytest-asyncio>=0.23", "respx>=0.21"]
 [project.scripts]
 flatmarket = "flatmarket.pipeline:main"
 flatmarket-agent-a = "flatmarket.agent_a:main"
-flatmarket-mcp = "flatmarket.server:main"
-flatmarket-charts-mcp = "flatmarket.charts:main"
 
 [build-system]
 requires = ["hatchling"]

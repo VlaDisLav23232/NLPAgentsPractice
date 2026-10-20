@@ -1,8 +1,4 @@
-"""MCP server `charts`: runs LLM-written pandas/matplotlib code for Agent B. Run: `uv run python -m flatmarket.charts`
-
-Each call runs in a fresh Python subprocess with a timeout and a whitelisted environment (no API keys), sees the
-flats DB read-only, and saves figures to REPORT_DIR. Not a security sandbox: it only keeps honest mistakes contained.
-"""
+"""MCP server `charts`: runs pandas/matplotlib code in a subprocess with a read-only DB and no API keys."""
 
 from __future__ import annotations
 
@@ -20,7 +16,6 @@ mcp = FastMCP("charts")
 TIMEOUT_S = 60
 MAX_OUTPUT = 4000
 IMAGE_SUFFIXES = {".png", ".svg", ".jpg"}
-# Windows needs SYSTEMROOT etc. for Python to start; nothing else from the parent leaks in.
 _PASS_ENV = ("PATH", "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "TEMP", "TMP", "LANG", "LC_ALL")
 
 PRELUDE = '''\
@@ -30,7 +25,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
-DB = sqlite3.connect(os.environ["FLATS_DB_URI"], uri=True)  # read-only
+DB = sqlite3.connect(os.environ["FLATS_DB_URI"], uri=True)
 OUT = Path(os.environ["REPORT_DIR"])
 '''
 

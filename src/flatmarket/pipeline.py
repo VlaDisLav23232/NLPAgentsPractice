@@ -1,9 +1,4 @@
-"""The full flow as one LangGraph graph: request -> Agent A (collect) -> Agent B (analyze) -> report.md + charts.
-
-    uv run flatmarket "1-2 кімнатні квартири у Львові до 90000 $"        # -q to hide the step trace
-
-Agent B is skipped when Agent A did not search (it asked a clarifying question or failed); its reply is shown instead.
-"""
+"""Full flow: Agent A (collect) -> Agent B (analyze)."""
 
 from __future__ import annotations
 
@@ -21,7 +16,7 @@ from flatmarket.agent_a import _text
 
 class State(TypedDict, total=False):
     request: str
-    a: dict  # agent_a.handoff(): {"summary", "search"}
+    a: dict
     report: str
     report_path: str
     charts: list[str]
@@ -34,7 +29,6 @@ def _short(x, n=300) -> str:
 
 
 async def _stream(agent, request: str, tag: str, verbose: bool, **config) -> dict:
-    """Run an agent and print each tool call / tool result / final answer as it happens; return the final state."""
     seen, state = 0, None
     async for state in agent.astream({"messages": [("user", request)]}, config, stream_mode="values"):
         for m in state["messages"][seen:]:

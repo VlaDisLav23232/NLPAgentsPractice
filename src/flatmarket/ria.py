@@ -1,8 +1,4 @@
-"""Minimal DOM.RIA client. Docs: https://docs-developers.ria.com/en/dim_ria/
-
-Free package limits: 30 requests/hour and 1000/month for ALL endpoints. When exhausted the API
-answers HTTP 403 with {"error": "У Вашому пакеті закінчились запити..."}.
-"""
+"""DOM.RIA client. Docs: https://docs-developers.ria.com/en/dim_ria/"""
 
 from __future__ import annotations
 
@@ -12,7 +8,6 @@ import re
 
 import httpx
 
-# RIA takes the key as a URL query parameter; don't let httpx log it.
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
 OPERATIONS = {"sale": 1, "rent_long": 3, "rent_daily": 4}
@@ -31,7 +26,7 @@ class QuotaExceeded(RiaError):
 def _get(path: str, params: dict | None = None):
     key = os.getenv("RIA_API_KEY", "").strip()
     if not key:
-        raise RiaError("RIA_API_KEY is not set (put it in .env, see .env.example)")
+        raise RiaError("RIA_API_KEY is not set")
     base = os.getenv("RIA_BASE_URL", "https://developers.ria.com").rstrip("/")
     try:
         resp = httpx.get(base + path, params={**(params or {}), "api_key": key}, timeout=30)
@@ -82,7 +77,6 @@ def build_query(
 
 
 def search(query: dict, page: int = 0) -> dict:
-    """-> {"items": [realty_id, ...], "count": total matches}. Max 100 ids per page."""
     return _get("/dom/search", {**query, "page": page})
 
 
@@ -95,7 +89,7 @@ def _num(v) -> float | None:
         return None
     if isinstance(v, (int, float)):
         return float(v)
-    s = re.sub(r"[^\d,.\-]", "", str(v)).replace(",", ".")  # "34 500" -> 34500
+    s = re.sub(r"[^\d,.\-]", "", str(v)).replace(",", ".")
     try:
         return float(s)
     except ValueError:
@@ -110,9 +104,8 @@ COLUMNS = [
 
 
 def normalize(raw: dict) -> dict:
-    """/dom/info payload -> flat row. Missing fields become None."""
     area = _num(raw.get("total_square_meters"))
-    price = _num((raw.get("priceArr") or {}).get("1"))  # "1" = USD, same ids as price_cur in the docs
+    price = _num((raw.get("priceArr") or {}).get("1"))
     if price is None and raw.get("currency_type") == "$":
         price = _num(raw.get("price_total"))
     url = raw.get("beautiful_url")

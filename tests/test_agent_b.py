@@ -1,5 +1,3 @@
-"""Agent B, the `charts` MCP server and the full A -> B pipeline, all offline (scripted models, fake DOM.RIA)."""
-
 import sqlite3
 from pathlib import Path
 
@@ -33,7 +31,7 @@ def test_run_python_makes_chart_and_reads_db(tmp_path, monkeypatch):
     monkeypatch.setenv("REPORT_DIR", str(tmp_path / "r"))
     out = charts.run_python(CHART)
     assert out["exit_code"] == 0 and out["stdout"].strip() == "3" and out["files"] == ["price.png"]
-    assert charts.run_python("print(1)")["files"] == []  # only files made by this call
+    assert charts.run_python("print(1)")["files"] == []
 
 
 def test_run_python_is_read_only_and_keyless(tmp_path, monkeypatch):
@@ -60,7 +58,7 @@ async def test_agent_b_writes_report_with_charts_via_mcp(tmp_path):
     model = ScriptedModel(responses=[
         call("query_flats", {"sql": "SELECT COUNT(*) FROM flats WHERE city_id = 5"}, "1"),
         call("run_python", {"code": CHART}, "2"),
-        AIMessage(content="# Report\n\nMedian price: $50 000."),  # forgot to embed the chart
+        AIMessage(content="# Report\n\nMedian price: $50 000."),
     ])
     out = await agent_b.run("квартири у Львові", handoff, report_dir=tmp_path / "rep", model=model)
     assert out["charts"] == ["price.png"] and "![price.png](price.png)" in out["report"]

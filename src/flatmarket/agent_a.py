@@ -1,10 +1,4 @@
-"""Agent A: a Gemini-driven LangGraph agent that collects flat listings from DOM.RIA into SQLite.
-
-    uv run flatmarket-agent-a "двокімнатні квартири у Львові до 80000 $"
-
-Needs GOOGLE_API_KEY (Gemini) and RIA_API_KEY in .env. Other agents can reuse `build_agent` (a compiled
-LangGraph graph, usable as a node) and `handoff` (pulls the structured result out of the run).
-"""
+"""Agent A: collects flat listings from DOM.RIA into SQLite."""
 
 from __future__ import annotations
 
@@ -36,7 +30,7 @@ asks for more. If search_flats returns status "partial", do not retry; tell the 
 
 def gemini() -> ChatGoogleGenerativeAI:
     if not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")):
-        raise RuntimeError("Set GOOGLE_API_KEY in .env (Gemini key from https://aistudio.google.com/apikey)")
+        raise RuntimeError("GOOGLE_API_KEY is not set")
     return ChatGoogleGenerativeAI(model=os.getenv("GEMINI_MODEL", "gemini-3.8-flash"), temperature=0)
 
 
@@ -51,7 +45,6 @@ def mcp_client() -> MultiServerMCPClient:
 
 
 async def build_agent(model=None):
-    # query_flats is Agent B's tool; offering it here makes the model read the (empty) DB instead of collecting
     tools = [t for t in await mcp_client().get_tools() if t.name in ("get_locations", "search_flats")]
     return create_agent(model or gemini(), tools, system_prompt=SYSTEM, name="agent_a")
 
@@ -63,7 +56,6 @@ def _text(content) -> str:
 
 
 def handoff(result: dict) -> dict:
-    """{"summary": Agent A's final message, "search": result of the last successful search_flats or None}."""
     messages = result["messages"]
     search = None
     for m in messages:
